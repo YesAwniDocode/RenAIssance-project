@@ -1,0 +1,61 @@
+!pip install opencv-python-headless
+!pip install pandas
+!pip install easyocr
+from google.colab import drive
+drive.mount('/content/drive')
+import cv2
+import pandas as pd
+import easyocr
+import numpy as np
+def preprocess_image(img):
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img_thresh = cv2.adaptiveThreshold(img_gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C,
+                                       cv2.THRESH_BINARY_INV, 19, 10)
+    return img_thresh
+    def recognize_text(img, languages=['en']):
+    reader = easyocr.Reader(languages)
+    result = reader.readtext(img, decoder='beamsearch', beamWidth=20,
+                             contrast_ths=0.8, adjust_contrast=0.9,
+                             filter_ths=0.5, text_threshold=0.7,
+                             low_text=0.5, canvas_size=5120,
+                             rotation_info=None,
+                             detail=0)
+    recognized_text = ' '.join(result)
+    return recognized_text
+    def process_image(image_path, languages=['en']):
+    img = cv2.imread(image_path)
+    if img is None:
+        print(f"Error: Unable to read image '{image_path}'")
+        return None
+    
+    preprocessed_img = preprocess_image(img)
+    extracted_text = recognize_text(preprocessed_img, languages=languages)
+    return extracted_text
+    
+image_paths = [
+    '/content/Padilla_-_Nobleza_virtuosa_testExtract_page-0001[1].jpg' ,
+    '/content/Padilla_-_Nobleza_virtuosa_testExtract_page-0002[1].jpg',
+    '/content/Padilla_-_Nobleza_virtuosa_testExtract_page-0003[1].jpg',
+    '/content/Padilla_-_Nobleza_virtuosa_testExtract_page-0004[1].jpg',
+    '/content/Padilla - Nobleza virtuosa_testExtract_page-0005.jpg',
+    '/content/Padilla - Nobleza virtuosa_testExtract_page-0006.jpg',
+    '/content/Padilla - Nobleza virtuosa_testExtract_page-0007.jpg',
+    '/content/Padilla - Nobleza virtuosa_testExtract_page-0008.jpg',
+    '/content/Padilla - Nobleza virtuosa_testExtract_page-0009.jpg',
+    '/content/Padilla - Nobleza virtuosa_testExtract_page-0010.jpg',
+    '/content/Padilla - Nobleza virtuosa_testExtract_page-0011.jpg',
+    '/content/Padilla - Nobleza virtuosa_testExtract_page-0012.jpg',
+    '/content/Padilla - Nobleza virtuosa_testExtract_page-0013.jpg',
+    '/content/Padilla - Nobleza virtuosa_testExtract_page-0014.jpg',
+    '/content/Padilla - Nobleza virtuosa_testExtract_page-0015.jpg',
+    '/content/Padilla - Nobleza virtuosa_testExtract_page-0016.jpg',
+]
+extracted_texts = []
+for image_path in image_paths:
+    extracted_text = process_image(image_path, languages=['it', 'es', 'fr'])
+    extracted_texts.append(extracted_text)
+
+df = pd.DataFrame({'image_path': image_paths, 'extracted_text': extracted_texts})
+
+print("Text extraction completed. DataFrame:")
+print(df)
